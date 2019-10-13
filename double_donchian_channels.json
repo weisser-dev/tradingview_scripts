@@ -1,0 +1,25 @@
+//@version=3
+study(title="Double Donchian Channels", shorttitle="Double DC", overlay=true)
+buyLength = input(20, minval=1)
+sellLength = input(13, minval=1)
+avgLength = input(10, minval=1)
+
+// buy
+buyLower = lowest(buyLength)
+buyUpper = highest(buyLength)
+buyL = plot(buyLower, color=green)
+buyU = plot(buyUpper, color=green)
+fill(buyU, buyL, color=yellow)
+
+// sell
+sellLower = lowest(sellLength)
+sellUpper = highest(sellLength)
+sellL = plot(sellLower, color=red)
+sellU = plot(sellUpper, color=red)
+fill(sellU, sellL, color=orange)
+
+// midLine
+midLower = lowest(avgLength)
+midUpper = highest(avgLength)
+midBasis = avg(midUpper, midLower)
+plot(midBasis, color=white)
