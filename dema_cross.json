@@ -1,0 +1,20 @@
+//@version=3
+study(title="Double Exponential Moving Average - Cross [whit-e]", shorttitle="DEMA - Cross [whit-e]", overlay=true)
+short = input(8, minval=1)
+srcShort = input(close, title="Source Dema 1")
+
+long = input(13, minval=1)
+srcLong = input(close, title="Source Dema 2")
+
+e1 = ema(srcShort, short)
+e2 = ema(e1, short)
+dema1 = 2 * e1 - e2
+plot(dema1, color=blue, linewidth = 3)
+
+e3 = ema(srcLong, long)
+e4 = ema(e3, long)
+dema2 = 2 * e3 - e4
+plot(dema2, color=yellow, linewidth = 3)
+
+plot(cross(dema1, dema2) ? dema1 : na, style = cross, linewidth = 4)
+
