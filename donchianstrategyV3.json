@@ -1,0 +1,79 @@
+//@version=3
+strategy(title="Donchian Channel with Custom Average Strategy [whit-e]", shorttitle="DC AVG Strategy [whit-e]", overlay=true)
+sellLength = input(title="Sell Length",type=integer, defval=21, minval=1)
+avgLength = input(title="Avg Length",type=integer, defval=21, minval=1)
+
+avgEnabled = input(title="Stop Sell on AVG", type=bool, defval=false)
+drawAvg = input(title="Draw AVG", type=bool, defval=false)
+
+// === BACKTEST RANGE ===
+// From Date
+FromMinute = input(defval = 0, title = "From Minute", minval = 00, maxval = 59)
+FromHour  = input(defval = 0, title = "From Hour", minval = 1, maxval = 23)
+FromMonth = input(defval = 1, title = "From Month", minval = 1, maxval = 12)
+FromDay   = input(defval = 1, title = "From Day", minval = 1, maxval = 31)
+FromYear  = input(defval = 2017, title = "From Year", minval = 2016)
+
+// To Date
+ToMinute = input(defval = 59, title = "To Minute", minval = 00, maxval = 59)
+ToHour  = input(defval = 23, title = "To Hour", minval = 0, maxval = 23)
+ToMonth   = input(defval = 1, title = "To Month", minval = 1, maxval = 12)
+ToDay     = input(defval = 1, title = "To Day", minval = 1, maxval = 31)
+ToYear    = input(defval = 9999, title = "To Year", minval = 2016)
+
+// Donchian Sell (draw)
+sellLower = lowest(sellLength)
+sellUpper = highest(sellLength)
+sellL = plot(sellLower, color=red)
+sellU = plot(sellUpper, color=green)
+fill(sellU, sellL, color=blue)
+
+// AVG Line (draw)
+midLower = lowest(avgLength)
+midUpper = highest(avgLength)
+midBasis = drawAvg ? avg(midUpper, midLower) : sellUpper
+plot(midBasis, color=white)
+
+///// TEST AREA
+
+len = input(title="Length", type=integer, defval=20)
+res = input(title="Resolution", type=resolution, defval="240")
+
+max = highest(high, len)
+min = lowest(low, len)
+mid = avg(max, min)
+
+mappedMax = security(tickerid, res, max)
+mappedMin = security(tickerid, res, min)
+mappedMid = security(tickerid, res, mid)
+
+plotMax = plot(mappedMax, color=green)
+plotMin = plot(mappedMin, color=red)
+plotMid = plot(mappedMid, color=orange)
+
+fill(plotMax, plotMid, color=green)
+fill(plotMin, plotMid, color=red)
+
+
+///// END TEST AREA
+
+
+//Strategy
+// sell when price = lowest price since length
+sellOnPrice = lowest(low, sellLength)
+// if avgEnables is set then buy when price = midBasis 
+// if avgEnables is not set then buy when price = highest price since length
+buyOnPrice = avgEnabled ? midBasis : (highest(high, sellLength))
+
+//buyOnPrice = avgPercentageEnabled ? ((midBasis > lowest(low, sellLength) * sellAvgPercentage)) : avgEnabled ? midBasis : (highest(high, sellLength))
+
+//buyOnPrice = avgEnabled ? ((midBasis > lowest(low, sellLength) * sellAvgPercentage) ? midBasis : (highest(high, sellLength))) :
+
+// trades only if timeCondition applies
+timeCondition = (time > timestamp(FromYear, FromMonth, FromDay, FromHour -1 , FromMinute)) and (time < timestamp(ToYear, ToMonth, ToDay, ToHour -1, ToMinute))
+sellCondition = mappedMid > highest(high, sellLength)
+
+
+if (not na(close[sellLength]))
+    strategy.entry("Buy", strategy.long, when= timeCondition ,stop=buyOnPrice, comment="Buy")
+    strategy.entry("Sell", strategy.short,when=sellCondition and timeCondition ,stop=sellOnPrice, comment="Sell")
